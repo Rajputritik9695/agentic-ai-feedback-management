@@ -1,0 +1,207 @@
+{
+  "name": "AI-Powered Student Feedback Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "FeedBack Form",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name :-",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "University Roll No. :-",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Branch(eg: CSE(AI), CSE(AI/DS),ME,etc) :-",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "E-Mail :-",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Phone Number :-",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "FeedBack :-",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -64,
+        0
+      ],
+      "id": "10f7b17b-8e8e-4c9e-8a3b-d7a0b846cff3",
+      "name": "FeedBack Form",
+      "webhookId": "c677b0bc-c146-4b35-84b6-bcb61e7d1919"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=A new feedback form has been submitted.\n\nName: {{ $json[\"Name :-\"] }}\nUniversity Roll No.: {{ $json[\"University Roll No. :-\"] }}\nBranch: {{ $json[\"Branch(eg: CSE(AI), CSE(AI/DS),ME,etc) :-\"] }}\nE-Mail: {{ $json[\"E-Mail :-\"] }}\nPhone Number: {{ $json[\"Phone Number :-\"] }}\nFeedback: {{ $json[\"FeedBack :-\"] }}\n\nProcess this submission.",
+        "options": {
+          "systemMessage": "You are a Feedback Processing Agent. Your ONLY job is to use tools - never respond with text directly.\n\nFor EVERY feedback submission, you MUST:\n\n1. Call send_student_email tool with:\n   - recipient_email: the student's email from the form\n   - email_subject: a thank-you subject line\n   - email_body: a professional thank-you message\n\n2. Call send_admin_report tool with:\n   - report_subject: summary subject (include student name and branch)\n   - report_body: complete report with all student details and feedback\n\nDo NOT write email content in your response. Do NOT explain what you will do. IMMEDIATELY call both tools with the appropriate parameters.\n\nAfter both tools execute successfully, output: \"Feedback processed successfully.\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "9a7718e8-f0a4-472f-a0ab-2b6f16c44795",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "waitBetweenTries": null
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxOutputTokens": 2000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        160,
+        224
+      ],
+      "id": "004ee23b-3fdd-44eb-8789-ca3e87494bf0",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ZGZ8L5ptD7kRl0xN",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('recipient_email', 'The email address of the student who submitted the feedback') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('email_subject', 'Subject line for the thank-you email') }}",
+        "emailType": "text",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('email_body', 'Professional thank-you message to the student') }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        224
+      ],
+      "id": "6c9affb7-f1e6-45d2-aaf5-9019d85aff39",
+      "name": "send_student_email",
+      "webhookId": "0300a1d4-1b90-4928-b6db-4e568a251d77",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kzF4ygO16mH7D5qh",
+          "name": "Gmail OAuth2 API"
+        }
+      },
+      "notes": "Send a thank-you email to the student who submitted the feedback form.\n\nUse this tool after every submission.\n\nRequired information:\n- Recipient email\n- Subject\n- Message\n\nAlways send exactly one email to the student's email address."
+    },
+    {
+      "parameters": {
+        "sendTo": "rajputritik7754@gmail.com",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('report_subject', 'Subject line for the admin feedback report') }}",
+        "emailType": "text",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('report_body', 'Detailed feedback report including student name, roll number, branch, email, phone, and feedback content') }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        224
+      ],
+      "id": "772d6d55-c8e6-4315-bb6f-396035d6e7d2",
+      "name": "send_admin_report",
+      "webhookId": "a0dbdd93-9e5e-43aa-9615-95ab98d612e1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kzF4ygO16mH7D5qh",
+          "name": "Gmail OAuth2 API"
+        }
+      },
+      "notes": "Send a feedback report to the administrator.\n\nAlways send this report to:\nrajputritik7754@gmail.com\n\nInclude:\n- Student name\n- Roll number\n- Branch\n- Email\n- Phone number\n- Feedback\n- Sentiment\n- Summary\n\nUse this tool exactly once for every feedback submission."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "FeedBack Form": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send_student_email": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send_admin_report": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "3e06db1c-47a8-4a82-9757-0d93fbbc56b3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "605be8d6497ebe810e48b3344d35cb725928bd8e8d4ae88dd9cb55d5a7170c6f"
+  },
+  "nodeGroups": [],
+  "id": "gvhuosnjpK1q5PYD",
+  "tags": []
+}
